@@ -4,21 +4,15 @@ async function searchVideos() {
   const loading = document.querySelector("#loading");
   const videoPlayer = document.querySelector("#videoPlayer");
 
-  if (!searchInput.value.trim()) 
-    return;
-
-
+  if (!searchInput.value.trim()) return;
 
   // Hide video player when starting new search
   videoPlayer.style.display = "none";
-
   loading.style.display = "block";
-
   videosGrid.innerHTML = "";
 
-
   try {
-    const response = await fetch("/api/search", {
+    const response = await fetch("http://localhost:3000/api/search", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -26,22 +20,22 @@ async function searchVideos() {
       body: JSON.stringify({ query: searchInput.value }),
     });
 
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
-
     if (data.videos) {
-
       displayVideos(data.videos);
     }
-  } 
-  catch (error) {
+  } catch (error) {
     console.error("Error fetching videos:", error);
-    videosGrid.innerHTML = "<p>Error fetching videos. Please try again.</p>";
-  } 
-  finally {
+    videosGrid.innerHTML =
+      "<p style='color: white;'>Error fetching videos. Please try again.</p>";
+  } finally {
     loading.style.display = "none";
   }
 }
-
 function playVideo(video) {
   const player = document.querySelector("#player");
 
@@ -49,8 +43,6 @@ function playVideo(video) {
   const videoTitle = document.querySelector("#videoTitle");
   const videoDetails = document.querySelector("#videoDetails");
   const videoDescription = document.getElementById("videoDescription");
-
-
 
   // Set video details
   player.src = `https://www.youtube.com/embed/${video.id}`;
@@ -62,25 +54,24 @@ function playVideo(video) {
   )}`;
   videoDescription.textContent = video.description;
 
-
   // Show video player
 
-  videoPlayer.style.display = 'block';
+  videoPlayer.style.display = "block";
   // Scroll to video player
-  videoPlayer.scrollIntoView({ behavior: 'smooth' });
+  videoPlayer.scrollIntoView({ behavior: "smooth" });
 }
 
 function formatDate(dateString) {
   return new Date(dateString).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
-    day: 'numeric',
+    day: "numeric",
   });
 }
 
 function displayVideos(videos) {
   const videosGrid = document.getElementById("videosGrid");
-  videosGrid.innerHTML = '';
+  videosGrid.innerHTML = "";
 
   videos.forEach((video) => {
     const videoCard = document.createElement("div");
@@ -98,7 +89,7 @@ function displayVideos(videos) {
   });
 }
 
-// Add event listener for Enter key 
+// Add event listener for Enter key
 document
   .getElementById("searchInput")
   .addEventListener("keypress", function (e) {
@@ -108,8 +99,8 @@ document
     }
   });
 
-// Add event listener click for the search 
-document.querySelector('button').addEventListener('click' , function(){
+// Add event listener click for the search
+document.querySelector("button").addEventListener("click", function () {
   document.querySelector(".alert-user").remove();
   searchVideos();
-})
+});
