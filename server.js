@@ -22,10 +22,10 @@ const app = express();
 app.use(
   cors({
     origin: "https://detoxified-youtube-feed-agpg.vercel.app",
-    allowedHeaders: "*",
+    allowedHeaders: ["Access-Control-Allow-Origin"],
     exposedHeaders: ["Access-Control-Allow-Origin"],
     methods: ["GET", "POST", "OPTIONS"],
-    preflightContinue: true
+    preflightContinue: true,
   })
 );
 app.use(express.json());
