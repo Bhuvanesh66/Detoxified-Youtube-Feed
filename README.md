@@ -112,4 +112,5 @@ project-directory/
 
 ## Contact
 
-For queries or feedback, please contact deepak.24bcs10067\@sst.scaler.com.
+For queries or feedback, please contact bhuvanesh.24bcs10134@sst.scaler.com
+
