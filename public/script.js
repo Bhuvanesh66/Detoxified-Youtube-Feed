@@ -1,14 +1,19 @@
 async function searchVideos() {
   const searchInput = document.querySelector("#searchInput");
+
   const videosGrid = document.querySelector("#videosGrid");
+
   const loading = document.querySelector("#loading");
   const videoPlayer = document.querySelector("#videoPlayer");
 
   if (!searchInput.value.trim()) return;
 
+
+
   // Hide video player when starting new search
   videoPlayer.style.display = "none";
   loading.style.display = "block";
+
   videosGrid.innerHTML = "";
 
   try {
@@ -23,14 +28,17 @@ async function searchVideos() {
       }
     );
 
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
+
     }
 
     const data = await response.json();
     if (data.videos) {
       displayVideos(data.videos);
     }
+
   } catch (error) {
     console.error("Error fetching videos:", error);
     videosGrid.innerHTML =
@@ -43,7 +51,10 @@ async function searchVideos() {
 function playVideo(video) {
   const player = document.querySelector("#player");
   const videoPlayer = document.querySelector("#videoPlayer");
+
+
   const videoTitle = document.querySelector("#videoTitle");
+
   const videoDetails = document.querySelector("#videoDetails");
   const videoDescription = document.getElementById("videoDescription");
 
@@ -89,6 +100,8 @@ function displayVideos(videos) {
   });
 }
 
+
+
 // Add event listener for Enter key
 document
   .getElementById("searchInput")
@@ -98,6 +111,7 @@ document
       if (alertUser) {
         alertUser.remove();
       }
+      
       searchVideos();
     }
   });
@@ -110,3 +124,5 @@ document.querySelector("button").addEventListener("click", function () {
   }
   searchVideos();
 });
+
+
