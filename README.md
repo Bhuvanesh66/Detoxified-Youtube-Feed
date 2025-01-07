@@ -9,7 +9,6 @@ A web-based project designed to enhance focus by reducing distractions on YouTub
 
 - **Minimal Interface**: Hides unnecessary YouTube elements like comments, related videos, and recommendations.
 - **Focus Mode**: Enables users to watch videos distraction-free.
-- **Customizable Filters**: Users can toggle visibility for specific YouTube elements such as the sidebar or comments.
 - **Lightweight and Fast**: Simple design with minimal overhead to ensure smooth browsing.
   
 ---
