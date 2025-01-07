@@ -1,70 +1,77 @@
 async function searchVideos() {
   const searchInput = document.querySelector("#searchInput");
-
   const videosGrid = document.querySelector("#videosGrid");
-
   const loading = document.querySelector("#loading");
   const videoPlayer = document.querySelector("#videoPlayer");
 
-  if (!searchInput.value.trim()) return;
-
-
+  if (!searchInput.value.trim()) {
+    videosGrid.innerHTML =
+      "<p class='error-message'>Please enter a search term</p>";
+    return;
+  }
 
   // Hide video player when starting new search
   videoPlayer.style.display = "none";
   loading.style.display = "block";
-
   videosGrid.innerHTML = "";
 
   try {
-    const response = await fetch(
-      "https://detoxified-youtube-feed.onrender.com/api/search",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query: searchInput.value }),
-      }
-    );
-
+    const response = await fetch("http://localhost:3000/api/search", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ query: searchInput.value }),
+    });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-
+      const errorData = await response.json().catch(() => null);
+      throw new Error(
+        errorData?.message || `HTTP error! status: ${response.status}`
+      );
     }
 
     const data = await response.json();
-    if (data.videos) {
-      displayVideos(data.videos);
+    if (data.videos && Array.isArray(data.videos)) {
+      if (data.videos.length === 0) {
+        videosGrid.innerHTML = "<p class='error-message'>No videos found</p>";
+      } else {
+        displayVideos(data.videos);
+      }
+    } else {
+      throw new Error("Invalid response format");
     }
-
   } catch (error) {
     console.error("Error fetching videos:", error);
-    videosGrid.innerHTML =
-      "<p style='color: white;'>Error fetching videos. Please try again.</p>";
+    videosGrid.innerHTML = `<p class='error-message'>Error fetching videos: ${
+      error.message || "Please try again"
+    }</p>`;
   } finally {
     loading.style.display = "none";
   }
 }
 
+
+
 function playVideo(video) {
+  if (!video || !video.id) return;
+
   const player = document.querySelector("#player");
   const videoPlayer = document.querySelector("#videoPlayer");
-
-
   const videoTitle = document.querySelector("#videoTitle");
-
   const videoDetails = document.querySelector("#videoDetails");
   const videoDescription = document.getElementById("videoDescription");
 
   // Set video details
   player.src = `https://www.youtube.com/embed/${video.id}`;
-  videoTitle.textContent = video.title;
-  videoDetails.textContent = `${video.channelTitle} • ${formatDate(
-    video.publishedAt
-  )}`;
-  videoDescription.textContent = video.description;
+  videoTitle.textContent = video.title || "Untitled";
+  videoDetails.textContent = `${
+    video.channelTitle || "Unknown Channel"
+  } • ${formatDate(video.publishedAt)}`;
+  videoDescription.textContent =
+    video.description || "No description available";
 
   // Show video player
   videoPlayer.style.display = "block";
@@ -73,11 +80,15 @@ function playVideo(video) {
 }
 
 function formatDate(dateString) {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  try {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  } catch (error) {
+    return "Invalid date";
+  }
 }
 
 function displayVideos(videos) {
@@ -85,44 +96,56 @@ function displayVideos(videos) {
   videosGrid.innerHTML = "";
 
   videos.forEach((video) => {
+    if (!video) return;
+
     const videoCard = document.createElement("div");
     videoCard.className = "video-card";
     videoCard.onclick = () => playVideo(video);
 
+    const thumbnail = video.thumbnail || "placeholder-image.jpg";
+    const title = video.title || "Untitled";
+    const channelTitle = video.channelTitle || "Unknown Channel";
+
     videoCard.innerHTML = `
-      <img class="thumbnail" src="${video.thumbnail}" alt="${video.title}">
+      <img 
+        class="thumbnail" 
+        src="${thumbnail}" 
+        alt="${title}"
+        onerror="this.src='placeholder-image.jpg'"
+      >
       <div class="video-info">
-        <div class="video-card-title">${video.title}</div>
-        <div class="channel-name">${video.channelTitle}</div>
+        <div class="video-card-title">${title}</div>
+        <div class="channel-name">${channelTitle}</div>
       </div>
     `;
     videosGrid.appendChild(videoCard);
   });
 }
 
+// Event Listeners
+document.addEventListener("DOMContentLoaded", () => {
+  const searchInput = document.getElementById("searchInput");
+  const searchButton = document.querySelector("button");
 
+  if (searchInput) {
+    searchInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        const alertUser = document.querySelector(".alert-user");
+        if (alertUser) {
+          alertUser.remove();
+        }
+        searchVideos();
+      }
+    });
+  }
 
-// Add event listener for Enter key
-document
-  .getElementById("searchInput")
-  .addEventListener("keypress", function (e) {
-    if (e.key === "Enter") {
+  if (searchButton) {
+    searchButton.addEventListener("click", function () {
       const alertUser = document.querySelector(".alert-user");
       if (alertUser) {
         alertUser.remove();
       }
-      
       searchVideos();
-    }
-  });
-
-// Add event listener click for the search
-document.querySelector("button").addEventListener("click", function () {
-  const alertUser = document.querySelector(".alert-user");
-  if (alertUser) {
-    alertUser.remove();
+    });
   }
-  searchVideos();
 });
-
-

@@ -1,33 +1,27 @@
-// server.js
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const { google } = require("googleapis");
 
-// Warning handlers
-process.removeAllListeners("warning");
-process.on("warning", (warning) => {
-  if (
-    warning.name === "DeprecationWarning" &&
-    warning.message.includes("punycode")
-  ) {
-    return;
-  }
-  console.warn(warning.name, warning.message);
-});
-
 const app = express();
 
-// Middleware
+// Updated CORS configuration
 app.use(
   cors({
-    origin: "https://detoxified-youtube-feed-agpg.vercel.app",
-    allowedHeaders: ["Access-Control-Allow-Origin"],
-    exposedHeaders: ["Access-Control-Allow-Origin"],
+    origin: [
+      "http://127.0.0.1:5501",
+      "http://localhost:5501",
+      "http://localhost:3000",
+    ],
     methods: ["GET", "POST", "OPTIONS"],
-    preflightContinue: true,
+    allowedHeaders: ["Content-Type"],
+    credentials: true,
   })
 );
+
+// Enable pre-flight requests for all routes
+app.options("*", cors());
+
 app.use(express.json());
 
 // Validate YouTube API key
@@ -63,7 +57,6 @@ app.post("/api/search", async (req, res) => {
       });
     }
 
-    // Search for videos with enhanced details
     const searchResponse = await youtube.search.list({
       part: "snippet",
       q: `${sanitizedQuery} -shorts`,
@@ -77,29 +70,45 @@ app.post("/api/search", async (req, res) => {
       throw new Error("Invalid response from YouTube API");
     }
 
-    // Get video IDs for additional details
-    const videoIds = searchResponse.data.items.map((item) => item.id.videoId);
+    const videoIds = searchResponse.data.items
+      .filter((item) => item && item.id && item.id.videoId)
+      .map((item) => item.id.videoId);
 
-    // Get additional video details
+    if (videoIds.length === 0) {
+      return res.json({
+        success: true,
+        videos: [],
+      });
+    }
+
     const videoDetailsResponse = await youtube.videos.list({
       part: "statistics,contentDetails",
       id: videoIds.join(","),
     });
 
-    // Combine search results with additional details
-    const videos = searchResponse.data.items.map((item, index) => {
-      const details = videoDetailsResponse.data.items[index];
-      return {
-        id: item.id.videoId,
-        title: item.snippet.title,
-        description: item.snippet.description,
-        thumbnail: item.snippet.thumbnails.high.url,
-        channelTitle: item.snippet.channelTitle,
-        publishedAt: item.snippet.publishedAt,
-        statistics: details ? details.statistics : null,
-        duration: details ? details.contentDetails.duration : null,
-      };
-    });
+    const videos = searchResponse.data.items
+      .map((item, index) => {
+        const details = videoDetailsResponse.data.items[index];
+
+        try {
+          return {
+            id: item.id.videoId,
+            title: item.snippet.title,
+            description: item.snippet.description,
+            thumbnail:
+              item.snippet.thumbnails.high?.url ||
+              item.snippet.thumbnails.default?.url,
+            channelTitle: item.snippet.channelTitle,
+            publishedAt: item.snippet.publishedAt,
+            statistics: details ? details.statistics : null,
+            duration: details ? details.contentDetails.duration : null,
+          };
+        } catch (error) {
+          console.error("Error processing video item:", error);
+          return null;
+        }
+      })
+      .filter((video) => video !== null);
 
     res.json({
       success: true,
@@ -114,26 +123,7 @@ app.post("/api/search", async (req, res) => {
   }
 });
 
-// Function to try different ports
-const startServer = (initialPort) => {
-  const server = app
-    .listen(initialPort)
-    .on("error", (err) => {
-      if (err.code === "EADDRINUSE") {
-        console.log(
-          `Port ${initialPort} is busy, trying ${initialPort + 1}...`
-        );
-        startServer(initialPort + 1);
-      } else {
-        console.error("Server error:", err);
-      }
-    })
-    .on("listening", () => {
-      const addr = server.address();
-      console.log(`Server running on port ${addr.port}`);
-    });
-};
-
-// Start server with initial port
 const PORT = process.env.PORT || 3000;
-startServer(PORT);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
