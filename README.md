@@ -31,14 +31,6 @@ A web-based project designed to enhance focus by reducing distractions on YouTub
 ---
 
 
-## Tech Stack
-
-- **Frontend**: HTML, CSS, JavaScript
-- **Backend API**: Google Gemini API for news and sentiment analysis
-- **Libraries Used**: None (Vanilla JS implementation)
-
----
-
 ## Setup Instructions
 
 ### Prerequisites
