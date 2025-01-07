@@ -12,13 +12,16 @@ async function searchVideos() {
   videosGrid.innerHTML = "";
 
   try {
-    const response = await fetch("http://localhost:3000/api/search", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ query: searchInput.value }),
-    });
+    const response = await fetch(
+      "https://detoxified-youtube-feed.onrender.com/api/search",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query: searchInput.value }),
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

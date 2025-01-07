@@ -19,7 +19,13 @@ process.on("warning", (warning) => {
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://detoxified-youtube-feed-agpg.vercel.app",
+    allowedHeaders: "*",
+    methods: ["GET", "POST"]
+  })
+);
 app.use(express.json());
 
 // Validate YouTube API key
