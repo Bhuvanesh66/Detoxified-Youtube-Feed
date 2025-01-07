@@ -23,7 +23,9 @@ app.use(
   cors({
     origin: "https://detoxified-youtube-feed-agpg.vercel.app",
     allowedHeaders: "*",
-    methods: ["GET", "POST"]
+    exposedHeaders: ["Access-Control-Allow-Origin"],
+    methods: ["GET", "POST", "OPTIONS"],
+    preflightContinue: true
   })
 );
 app.use(express.json());
