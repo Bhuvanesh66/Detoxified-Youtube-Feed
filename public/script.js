@@ -1,15 +1,40 @@
+async function searchVideos() {
+  const searchInput = document.querySelector("#searchInput");
+  const videosGrid = document.querySelector("#videosGrid");
+  const loading = document.querySelector("#loading");
+  const videoPlayer = document.querySelector("#videoPlayer");
 
+  if (!searchInput.value.trim()) return;
 
+  // Hide video player when starting new search
+  videoPlayer.style.display = "none";
+  loading.style.display = "block";
+  videosGrid.innerHTML = "";
 
+  try {
+    const response = await fetch("http://localhost:3000/api/search", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: searchInput.value }),
+    });
 
-const YOUTUBE_API_KEY = "AIzaSyDFLsIj-DrPyi9BVwrZy_zPeU3TyYcRAsA";
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-function formatDate(dateString) {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+    const data = await response.json();
+    if (data.videos) {
+      displayVideos(data.videos);
+    }
+  } catch (error) {
+    console.error("Error fetching videos:", error);
+    videosGrid.innerHTML =
+      "<p style='color: white;'>Error fetching videos. Please try again.</p>";
+  } finally {
+    loading.style.display = "none";
+  }
 }
 
 function playVideo(video) {
@@ -19,13 +44,26 @@ function playVideo(video) {
   const videoDetails = document.querySelector("#videoDetails");
   const videoDescription = document.getElementById("videoDescription");
 
+  // Set video details
   player.src = `https://www.youtube.com/embed/${video.id}`;
   videoTitle.textContent = video.title;
-  videoDetails.textContent = `${video.channelTitle} • ${formatDate(video.publishedAt)}`;
+  videoDetails.textContent = `${video.channelTitle} • ${formatDate(
+    video.publishedAt
+  )}`;
   videoDescription.textContent = video.description;
 
+  // Show video player
   videoPlayer.style.display = "block";
+  // Scroll to video player
   videoPlayer.scrollIntoView({ behavior: "smooth" });
+}
+
+function formatDate(dateString) {
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 function displayVideos(videos) {
@@ -48,73 +86,24 @@ function displayVideos(videos) {
   });
 }
 
-async function searchVideos() {
-  const searchInput = document.querySelector("#searchInput");
-  const videosGrid = document.querySelector("#videosGrid");
-  const loading = document.querySelector("#loading");
-  const videoPlayer = document.querySelector("#videoPlayer");
-
-  if (!searchInput.value.trim()) return;
-
-  videoPlayer.style.display = "none";
-  loading.style.display = "block";
-  videosGrid.innerHTML = "";
-
-  try {
-    // First API call to search for videos
-    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchInput.value + ' -shorts')}&type=video&maxResults=36&videoDuration=medium&key=${YOUTUBE_API_KEY}`;
-    const searchResponse = await fetch(searchUrl);
-    const searchData = await searchResponse.json();
-
-    if (!searchData.items) {
-      throw new Error("No results found");
+// Add event listener for Enter key
+document
+  .getElementById("searchInput")
+  .addEventListener("keypress", function (e) {
+    if (e.key === "Enter") {
+      const alertUser = document.querySelector(".alert-user");
+      if (alertUser) {
+        alertUser.remove();
+      }
+      searchVideos();
     }
+  });
 
-    // Get video IDs for detailed information
-    const videoIds = searchData.items.map(item => item.id.videoId).join(',');
-    
-    // Second API call to get video details
-    const detailsUrl = `https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails&id=${videoIds}&key=${YOUTUBE_API_KEY}`;
-    const detailsResponse = await fetch(detailsUrl);
-    const detailsData = await detailsResponse.json();
-
-    // Combine the data
-    const videos = searchData.items.map((item, index) => {
-      const details = detailsData.items[index];
-      return {
-        id: item.id.videoId,
-        title: item.snippet.title,
-        description: item.snippet.description,
-        thumbnail: item.snippet.thumbnails.high.url,
-        channelTitle: item.snippet.channelTitle,
-        publishedAt: item.snippet.publishedAt,
-        statistics: details ? details.statistics : null,
-        duration: details ? details.contentDetails.duration : null,
-      };
-    });
-
-    displayVideos(videos);
-  } catch (error) {
-    console.error("Error fetching videos:", error);
-    videosGrid.innerHTML = "<p style='color: white;'>Error fetching videos. Please try again.</p>";
-  } finally {
-    loading.style.display = "none";
-  }
-}
-
-// Event Listeners
-document.getElementById("searchInput").addEventListener("keypress", function (e) {
-  if (e.key === "Enter") {
-    if (document.querySelector(".alert-user")) {
-      document.querySelector(".alert-user").remove();
-    }
-    searchVideos();
-  }
-});
-
+// Add event listener click for the search
 document.querySelector("button").addEventListener("click", function () {
-  if (document.querySelector(".alert-user")) {
-    document.querySelector(".alert-user").remove();
+  const alertUser = document.querySelector(".alert-user");
+  if (alertUser) {
+    alertUser.remove();
   }
   searchVideos();
 });
