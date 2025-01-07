@@ -35,8 +35,8 @@ A web-based project designed to enhance focus by reducing distractions on YouTub
 
 ### Prerequisites
 
-- A modern web browser (Google Chrome, Firefox, etc.)
-- A valid Google API key with access to the Gemini model
+- A modern web browser (Chrome, Edge, Firefox, etc.)
+- A valid YouTube API key or with Google unrestricted API key
 
 ## Installation and Usage
 
