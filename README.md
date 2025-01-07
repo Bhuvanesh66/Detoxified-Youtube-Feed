@@ -77,7 +77,7 @@ If you want to be productive while using YouTube and want to skip unwanted recom
 project-directory/
 |-public
   |-- index.html         # Main HTML file
-  |-- search.html        # Additionaly and required HTML file
+  |-- search.html        # Additionally required HTML file
   |-- styles.css         # Embedded CSS in the HTML file
   |-- script.js          # Embedded JavaScript in the HTML file
 |-server.js
