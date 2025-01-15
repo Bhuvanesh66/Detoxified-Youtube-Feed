@@ -1,3 +1,6 @@
+
+const BACKEND_URL = "https://detoxified-youtube-feed-56np.onrender.com"; // Replacing backend url of my local host with your actual Render URL
+
 async function searchVideos() {
   const searchInput = document.querySelector("#searchInput");
   const videosGrid = document.querySelector("#videosGrid");
@@ -10,13 +13,12 @@ async function searchVideos() {
     return;
   }
 
-  // Hide video player when starting new search
   videoPlayer.style.display = "none";
   loading.style.display = "block";
   videosGrid.innerHTML = "";
 
   try {
-    const response = await fetch("http://localhost:3000/api/search", {
+    const response = await fetch(`${BACKEND_URL}/api/search`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
