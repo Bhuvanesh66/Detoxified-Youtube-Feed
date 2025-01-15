@@ -2,12 +2,13 @@
      margin: 0;
      padding: 0;
      box-sizing: border-box;
+     color: black
  }
 
  body {
      font-family: Arial, sans-serif;
      padding: 20px;
-     background-color: #1b1b1b;
+     background-color: #e0dada;
  }
 
  .container {

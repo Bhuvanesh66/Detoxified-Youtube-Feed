@@ -8,18 +8,14 @@ const app = express();
 // Updated CORS configuration
 app.use(
   cors({
-    origin: [
-      "http://127.0.0.1:5501",
-      "http://localhost:5501",
-      "http://localhost:3000",
-    ],
+    origin: ["http://127.0.0.1:5500", "http://localhost:5500"], //changed port to 5500
     methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type"],
+    allowedHeaders: ["Content-Type", "Accept"],
     credentials: true,
   })
 );
 
-// Enable pre-flight requests for all routes
+// Enable pre-flight requests
 app.options("*", cors());
 
 app.use(express.json());
@@ -34,6 +30,11 @@ if (!process.env.YOUTUBE_API_KEY) {
 const youtube = google.youtube({
   version: "v3",
   auth: process.env.YOUTUBE_API_KEY,
+});
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
 // Search endpoint
@@ -82,26 +83,32 @@ app.post("/api/search", async (req, res) => {
     }
 
     const videoDetailsResponse = await youtube.videos.list({
-      part: "statistics,contentDetails",
+      part: "statistics,contentDetails,snippet",
       id: videoIds.join(","),
     });
 
-    const videos = searchResponse.data.items
-      .map((item, index) => {
-        const details = videoDetailsResponse.data.items[index];
+    const videos = videoDetailsResponse.data.items
+      .map((details) => {
+        const searchItem = searchResponse.data.items.find(
+          (item) => item.id.videoId === details.id
+        );
+
+        if (!searchItem) {
+          return null;
+        }
 
         try {
           return {
-            id: item.id.videoId,
-            title: item.snippet.title,
-            description: item.snippet.description,
+            id: details.id,
+            title: searchItem.snippet.title,
+            description: searchItem.snippet.description,
             thumbnail:
-              item.snippet.thumbnails.high?.url ||
-              item.snippet.thumbnails.default?.url,
-            channelTitle: item.snippet.channelTitle,
-            publishedAt: item.snippet.publishedAt,
-            statistics: details ? details.statistics : null,
-            duration: details ? details.contentDetails.duration : null,
+              searchItem.snippet.thumbnails.high?.url ||
+              searchItem.snippet.thumbnails.default?.url,
+            channelTitle: searchItem.snippet.channelTitle,
+            publishedAt: searchItem.snippet.publishedAt,
+            statistics: details.statistics,
+            duration: details.contentDetails.duration,
           };
         } catch (error) {
           console.error("Error processing video item:", error);
@@ -117,8 +124,9 @@ app.post("/api/search", async (req, res) => {
   } catch (error) {
     console.error("Server Error:", error);
     res.status(500).json({
-      error: "Internal server error",
-      message: "An error occurred while processing your request",
+      error: "Server error",
+      message:
+        error.message || "An error occurred while processing your request",
     });
   }
 });
@@ -126,4 +134,5 @@ app.post("/api/search", async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Server is accepting requests from: http://localhost:5500`);
 });

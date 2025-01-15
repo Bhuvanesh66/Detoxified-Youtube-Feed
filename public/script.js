@@ -27,10 +27,17 @@ async function searchVideos() {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(
-        errorData?.message || `HTTP error! status: ${response.status}`
-      );
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        if (errorData && errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch (e) {
+        //if the error data is not in JSON format
+      }
+
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
@@ -41,7 +48,9 @@ async function searchVideos() {
         displayVideos(data.videos);
       }
     } else {
-      throw new Error("Invalid response format");
+      throw new Error(
+        "Invalid response format: 'videos' property not found or not an array"
+      );
     }
   } catch (error) {
     console.error("Error fetching videos:", error);
@@ -52,8 +61,6 @@ async function searchVideos() {
     loading.style.display = "none";
   }
 }
-
-
 
 function playVideo(video) {
   if (!video || !video.id) return;
